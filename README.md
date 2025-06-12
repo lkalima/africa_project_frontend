@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Africa Project - Frontend
 
-## Getting Started
+This repository contains the frontend application for the Africa Project, built with Next.js and React. It fetches data from the [Africa Project Backend API](https://github.com/lkalima/africa-project-backend) and renders the user-facing website.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 Getting Started
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Follow these instructions to get the frontend running on your local machine for development and testing purposes.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Prerequisites
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- [Node.js](https://nodejs.org/) (LTS version, `nvm` recommended)
+- [Git](https://git-scm.com/)
+- A running instance of the [Africa Project Backend](https://github.com/lkalima/africa-project-backend) on `http://localhost:3000`.
 
-## Learn More
+### Installation & Setup
 
-To learn more about Next.js, take a look at the following resources:
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/lkalima/african-voices-frontend.git
+    ```
+2.  **Navigate to the project directory:**
+    ```bash
+    cd african-voices-frontend
+    ```
+3.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+4.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
+5.  Open [http://localhost:3001](http://localhost:3001) with your browser to see the result. The backend API must be running on `localhost:3000` for the data fetching to work.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📁 Project Structure
 
-## Deploy on Vercel
+This project uses the Next.js App Router. Here is an overview of the key files and folders:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+*   **/src/app/**: This is the core of the application. All pages, layouts, and components live here.
+    *   **/src/app/layout.tsx**: The root layout that wraps all pages.
+    *   **/src/app/page.tsx**: The homepage of the website.
+    *   **/src/app/instruments/**: A route group for all instrument-related pages.
+        *   **/src/app/instruments/page.tsx**: The main list page that displays all musical instruments.
+        *   **/src/app/instruments/[slug]/page.tsx**: The dynamic detail page for a single musical instrument. The `[slug]` is a parameter that corresponds to the instrument's unique slug.
+*   **/public/**: Contains static assets that are served directly, such as images, fonts, and favicons.
+*   **next.config.js**: The main configuration file for Next.js.
+*   **tsconfig.json**: The configuration file for TypeScript.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 📚 Learn More & Documentation
+
+For a full overview of the project's vision, architecture, data models, and workflows, please refer to the comprehensive **[Project Blueprint](https://github.com/lkalima/africa-project-backend/blob/main/README.md)** located in the backend repository.
