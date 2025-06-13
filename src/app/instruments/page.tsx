@@ -1,3 +1,4 @@
+// Page: src/app/instruments/page.tsx
 import Link from 'next/link'; // <-- IMPORT LINK
 
 
@@ -23,16 +24,16 @@ export default async function InstrumentsPage() {
   const instruments = await getInstruments();
 
   return (
-    <main>
-      <h1>African Musical Instruments</h1>
-      <ul>
+    <main className="p-8 max-w-4xl mx-auto">
+      <h1 className="text-4xl font-bold mb-6 text-white">African Musical Instruments</h1>
+      <ul className="space-y-2">
         {instruments.map((instrument) => (
           <li key={instrument.id}>
-            {/* WRAP THE CONTENT IN A LINK */}
-            <Link href={`/instruments/${instrument.slug}`}>
+            {/* The Link component now contains the text we want to display */}
+            <Link href={`/instruments/${instrument.slug}`} className="text-xl text-blue-400 hover:underline">
               <strong>{instrument.name}</strong> 
               {instrument.primary_ethnic_group && typeof instrument.primary_ethnic_group === 'object' 
-                ? ` - (${instrument.primary_ethnic_group.name})` 
+                ? <span className="text-gray-400 text-lg"> - ({instrument.primary_ethnic_group.name})</span>
                 : ''}
             </Link>
           </li>
