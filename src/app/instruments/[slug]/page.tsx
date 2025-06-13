@@ -2,31 +2,23 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { serialize } from '@/components/RichText/serialize'; // <-- 1. IMPORT THE NEW SERIALIZER
+import { serialize } from '@/components/RichText/serialize'; // Our trusted serializer
+import { PayloadImage } from '@/components/PayloadImage'; // <-- 1. IMPORT THE NEW COMPONENT
 
 // This server-side function fetches the data for a single instrument
 async function getInstrumentBySlug(slug: string) {
-  // Use depth=2 to ensure that relations within relations (like a parent geography) are also populated
   const response = await fetch(`http://localhost:3000/api/musical-instruments?where[slug][equals]=${slug}&depth=2`, {
-    cache: 'no-store' // Use no-store during development to see changes immediately
+    cache: 'no-store'
   });
-
-  if (!response.ok) {
-    // This will be caught by the Next.js error boundary
-    throw new Error('Failed to fetch instrument');
-  }
-
+  if (!response.ok) throw new Error('Failed to fetch instrument');
   const data = await response.json();
-  // The API returns an array of documents, we want the first (and only) one
   return data.docs[0]; 
 }
 
-// This is the main page component. It's a Server Component.
+// The main page component
 export default async function InstrumentDetailPage({ params }: { params: { slug: string } }) {
-  // Fetch the specific instrument data based on the URL's slug
   const instrument = await getInstrumentBySlug(params.slug);
 
-  // If no instrument is found, display a "not found" message
   if (!instrument) {
     return (
       <main className="p-8 text-white text-center">
@@ -40,11 +32,9 @@ export default async function InstrumentDetailPage({ params }: { params: { slug:
 
   // A reusable helper component to render lists of links cleanly
   const renderLinkList = (items: any[], basePath: string) => {
-    // If items is null, undefined, or empty, don't render anything
     if (!items || items.length === 0) {
       return <p className="text-gray-500 text-sm">None listed.</p>;
     }
-  
     return (
       <ul className="list-disc list-inside space-y-1">
         {items.map(item => (
@@ -58,7 +48,6 @@ export default async function InstrumentDetailPage({ params }: { params: { slug:
     );
   }
 
-  // This is the main JSX returned for the page
   return (
     <main className="p-4 md:p-8 bg-gray-900 text-gray-200 min-h-screen">
       <div className="max-w-5xl mx-auto">
@@ -71,26 +60,27 @@ export default async function InstrumentDetailPage({ params }: { params: { slug:
           {/* Left Column: Media */}
           <div>
             {instrument.primary_image && typeof instrument.primary_image === 'object' && (
-              <Image
-                src={instrument.primary_image.url}
-                alt={instrument.name}
-                width={instrument.primary_image.width}
-                height={instrument.primary_image.height}
-                className="rounded-lg shadow-lg w-full object-cover aspect-square"
-                priority // Tells Next.js to load this image first
-              />
+            // --- 2. USE THE NEW COMPONENT ---
+            <PayloadImage
+              src={instrument.primary_image.url}
+              alt={instrument.name}
+              width={instrument.primary_image.width}
+              height={instrument.primary_image.height}
+              className="rounded-lg shadow-lg w-full object-cover aspect-square"
+              priority
+            />
             )}
             {instrument.audio_sample && typeof instrument.audio_sample === 'object' && (
               <div className="mt-4">
-                <p className="font-semibold mb-2 text-white">Listen:</p>
+                <p className="font-semibold mb-2 text-white">Listen:</p>     
                 <audio controls className="w-full">
-                  <source src={instrument.audio_sample.url} type={instrument.audio_sample.mimeType} />
+                  <source src={`${process.env.NEXT_PUBLIC_PAYLOAD_URL}${instrument.audio_sample.url}`} type={instrument.audio_sample.mimeType} />
                   Your browser does not support the audio element.
                 </audio>
               </div>
             )}
           </div>
-          {/* Right Column: Title and Details Box */}
+          {/* ... Right Column: Title and Details Box ... */}
           <div>
             <h1 className="text-5xl font-extrabold text-white">{instrument.name}</h1>
             <p className="text-xl italic text-gray-400 mt-2">{instrument.description_short}</p>
@@ -113,18 +103,28 @@ export default async function InstrumentDetailPage({ params }: { params: { slug:
         </div>
 
         {/* --- MAIN CONTENT & RELATIONS --- */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-12 gap-y-12">
+          {/* Main Description Column */}
           <div className="md:col-span-2">
             <div className="prose prose-invert max-w-none">
               <h2 className="text-3xl font-bold text-white border-b border-gray-700 pb-2 mb-4">Description</h2>
-              
-              {/* --- 2. USE THE SERIALIZER DIRECTLY --- */}
-              {instrument.description_long?.root?.children ? (
+              {instrument.description_long ? (
                 <div>{serialize(instrument.description_long.root.children)}</div>
               ) : (
                 <p className="text-gray-500">No detailed description available.</p>
               )}
             </div>
+            {/* --- ADD THE SOURCES SECTION --- */}
+            <div className="prose prose-invert max-w-none mt-12">
+              <h2 className="text-3xl font-bold text-white border-b border-gray-700 pb-2 mb-4">Sources</h2>
+              {instrument.sources?.root?.children ? (
+                // We use the same 'serialize' function that we use for the main description
+                <div>{serialize(instrument.sources.root.children)}</div>
+              ) : (
+                <p className="text-gray-500">No sources listed for this entry.</p>
+              )}
+            </div>
+            {/* ----------------------------- */}
           </div>
 
           {/* Related Info Sidebar */}
@@ -141,9 +141,25 @@ export default async function InstrumentDetailPage({ params }: { params: { slug:
               <h3 className="text-2xl font-bold text-white border-b border-gray-700 pb-2 mb-3">Historical Context</h3>
               {renderLinkList(instrument.historical_context, 'historical-periods')}
             </div>
+            {/* --- ADD THE VIDEO LINKS SECTION --- */}
+            {instrument.video_links && instrument.video_links.length > 0 && (
+              <div>
+                <h3 className="text-2xl font-bold text-white border-b border-gray-700 pb-2 mb-3">Performances</h3>
+                <div className="space-y-4">
+                  {instrument.video_links.map((video, index) => (
+                    <div key={index}>
+                      {/* We can make this an embedded player later */}
+                      <a href={video.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                        {video.description || video.url}
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* ------------------------------------- */}
           </div>
         </div>
-
       </div>
     </main>
   );
