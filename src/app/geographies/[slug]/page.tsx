@@ -1,15 +1,24 @@
-
 // src/app/geographies/[slug]/page.tsx
 import Link from 'next/link';
 
 // Helper function to render lists of linked items
-const renderLinkList = (items, basePath) => {
-  if (!items || !items.docs || items.docs.length === 0) {
+const renderLinkList = (items: any[] | undefined, basePath: string) => {
+  if (!items || items.length === 0) {
     return <p className="text-gray-500">None listed.</p>;
   }
+  // Create a Set to store unique IDs to prevent duplicates in the list
+  const uniqueIds = new Set();
+  const uniqueItems = items.filter(item => {
+    if (!uniqueIds.has(item.id)) {
+      uniqueIds.add(item.id);
+      return true;
+    }
+    return false;
+  });
+
   return (
     <ul className="list-disc list-inside space-y-1">
-      {items.docs.map(item => (
+      {uniqueItems.map(item => (
         <li key={item.id}>
           <Link href={`/${basePath}/${item.slug}`} className="text-blue-400 hover:underline">
             {item.name}
@@ -20,8 +29,8 @@ const renderLinkList = (items, basePath) => {
   );
 };
 
+// Fetches the main geography and its direct relationships
 async function getGeographyBySlug(slug: string) {
-  // We need depth=2 to get the full parent/child objects
   const response = await fetch(`http://localhost:3000/api/geographies?where[slug][equals]=${slug}&depth=2`, {
     cache: 'no-store'
   });
@@ -30,11 +39,10 @@ async function getGeographyBySlug(slug: string) {
   return data.docs[0];
 }
 
-// --- NEW HELPER FUNCTION ---
-async function getEthnicGroupsForNations(nationIds: string[]) {
+// Fetches all ethnic groups found within a list of nations (for inference)
+async function getInferredEthnicGroups(nationIds: string[]) {
   if (!nationIds || nationIds.length === 0) return [];
-  // Build a query to find ethnic groups where 'primary_nations' contains any of the IDs
-  const query = `http://localhost:3000/api/ethnic-groups?where[primary_nations][in]=${nationIds.join(',')}&limit=200`;
+  const query = `http://localhost:3000/api/ethnic-groups?where[primary_nations][in]=${nationIds.join(',')}&limit=200&depth=0`;
   const response = await fetch(query, { cache: 'no-store' });
   if (!response.ok) return [];
   const data = await response.json();
@@ -44,15 +52,25 @@ async function getEthnicGroupsForNations(nationIds: string[]) {
 export default async function GeographyDetailPage({ params }: { params: { slug: string } }) {
   const geo = await getGeographyBySlug(params.slug);
 
-  if (!geo) { /* ... not found ... */ }
+  if (!geo) {
+    return <main className="p-8 text-white"><h1>Geography not found!</h1></main>;
+  }
 
-  // --- NEW LOGIC: FETCH INFERRED ETHNIC GROUPS ---
-  let inferredEthnicGroups = [];
+  // --- HIERARCHICAL FETCH LOGIC ---
+  // Start with the ethnic groups directly joined to this geography
+  let allEthnicGroups = geo.ethnic_groups?.docs || [];
+
+  // If it's a Continental Zone, also fetch groups from its child nations and merge them
   if (geo.type === 'Continental Zone' && geo.child_regions?.docs?.length > 0) {
     const nationIds = geo.child_regions.docs.map(child => child.id);
-    inferredEthnicGroups = await getEthnicGroupsForNations(nationIds);
+    const inferredGroups = await getInferredEthnicGroups(nationIds);
+    // Combine the direct list with the inferred list
+    allEthnicGroups = [...allEthnicGroups, ...inferredGroups];
   }
-  // ------------------------------------------
+  // ---------------------------------
+
+  const instruments = geo.instruments?.docs;
+  const childRegions = geo.child_regions?.docs;
 
   return (
     <main className="p-4 md:p-8 bg-gray-900 text-gray-200 min-h-screen">
@@ -62,36 +80,24 @@ export default async function GeographyDetailPage({ params }: { params: { slug: 
         </Link>
         
         <h1 className="text-5xl font-extrabold text-white">{geo.name}</h1>
-        <p className="text-xl text-gray-400 mt-2">Type: {geo.type}</p>
-        
-        {geo.parent_region && typeof geo.parent_region === 'object' && (
-          <p className="text-lg text-gray-300">
-            Part of: <Link href={`/geographies/${geo.parent_region.slug}`} className="text-blue-400 hover:underline">{geo.parent_region.name}</Link>
-          </p>
-        )}
+        {/* ... Type and Parent Region ... */}
 
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-          {/* Section for Child Regions */}
-          {geo.child_regions && geo.child_regions.docs && geo.child_regions.docs.length > 0 && (
+        <div className="mt-12 space-y-12">
+          {childRegions && childRegions.length > 0 && (
             <div>
               <h2 className="text-3xl font-bold text-white border-b border-gray-700 pb-2 mb-4">Sub-Regions / Nations</h2>
-              {renderLinkList(geo.child_regions, 'geographies')}
+              {renderLinkList(childRegions, 'geographies')}
             </div>
           )}
 
-          {/* Section for Ethnic Groups */}
           <div>
             <h2 className="text-3xl font-bold text-white border-b border-gray-700 pb-2 mb-4">Ethnic Groups</h2>
-            {/* --- RENDER THE CORRECT LIST --- */}
-            {geo.type === 'Continental Zone' 
-              ? renderLinkList(inferredEthnicGroups, 'ethnic-groups') 
-              : renderLinkList(geo.ethnic_groups?.docs, 'ethnic-groups')}
+            {renderLinkList(allEthnicGroups, 'ethnic-groups')}
           </div>
 
-          {/* Section for Instruments */}
-          <div className="md:col-span-2">
+          <div>
             <h2 className="text-3xl font-bold text-white border-b border-gray-700 pb-2 mb-4">Instruments from this Region</h2>
-            {renderLinkList(geo.instruments, 'instruments')}
+            {renderLinkList(instruments, 'instruments')}
           </div>
         </div>
       </div>
