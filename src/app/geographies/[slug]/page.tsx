@@ -81,14 +81,25 @@ export default async function GeographyDetailPage({ params }: { params: { slug: 
         
         <h1 className="text-5xl font-extrabold text-white">{geo.name}</h1>
         {/* ... Type and Parent Region ... */}
+        <p className="text-xl text-gray-400 mt-2">Type: {geo.type}</p>
+
+        {/* --- ADD THIS BLOCK BACK --- */}
+        {geo.parent_region && typeof geo.parent_region === 'object' && (
+          <p className="text-lg text-gray-300 mt-2">
+            Part of: <Link href={`/geographies/${geo.parent_region.slug}`} className="text-blue-400 hover:underline">{geo.parent_region.name}</Link>
+          </p>
+        )}
+        {/* ------------------------- */}
 
         <div className="mt-12 space-y-12">
+          {/* --- ADD THIS BLOCK BACK --- */}
           {childRegions && childRegions.length > 0 && (
             <div>
               <h2 className="text-3xl font-bold text-white border-b border-gray-700 pb-2 mb-4">Sub-Regions / Nations</h2>
               {renderLinkList(childRegions, 'geographies')}
             </div>
           )}
+          {/* ------------------------- */}
 
           <div>
             <h2 className="text-3xl font-bold text-white border-b border-gray-700 pb-2 mb-4">Ethnic Groups</h2>
