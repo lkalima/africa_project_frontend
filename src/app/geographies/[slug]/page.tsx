@@ -40,10 +40,32 @@ async function getGeographyBySlug(slug: string) {
   return data.docs[0];
 }
 
+// --- NEW HELPER FUNCTION ---
+// Finds all Modern Nations that are "part of" a given broader region (by ID)
+async function getNationsInRegion(regionId: string) {
+  if (!regionId) return [];
+  const query = `http://localhost:3000/api/geographies?where[containing_regions][in]=${regionId}&limit=100&depth=0`;
+  const response = await fetch(query, { cache: 'no-store' });
+  if (!response.ok) return [];
+  const data = await response.json();
+  return data.docs;
+}
+// ----------------------------
+
 // Fetches all ethnic groups found within a list of nations (for inference)
 async function getInferredEthnicGroups(nationIds: string[]) {
   if (!nationIds || nationIds.length === 0) return [];
   const query = `http://localhost:3000/api/ethnic-groups?where[primary_nations][in]=${nationIds.join(',')}&limit=200&depth=0`;
+  const response = await fetch(query, { cache: 'no-store' });
+  if (!response.ok) return [];
+  const data = await response.json();
+  return data.docs;
+}
+
+// Fetches all instruments found within a list of nations (for inference)
+async function getInferredInstruments(nationIds: string[]) {
+  if (!nationIds || nationIds.length === 0) return [];
+  const query = `http://localhost:3000/api/musical-instruments?where[geography_origin][in]=${nationIds.join(',')}&limit=200&depth=0`;
   const response = await fetch(query, { cache: 'no-store' });
   if (!response.ok) return [];
   const data = await response.json();
@@ -57,21 +79,31 @@ export default async function GeographyDetailPage({ params }: { params: { slug: 
     return <main className="p-8 text-white"><h1>Geography not found!</h1></main>;
   }
 
-  // --- HIERARCHICAL FETCH LOGIC ---
-  // Start with the ethnic groups directly joined to this geography
+      // --- REVISED & FINAL HIERARCHICAL FETCH LOGIC ---
   let allEthnicGroups = geo.ethnic_groups?.docs || [];
-
-  // If it's a Continental Zone, also fetch groups from its child nations and merge them
-  if (geo.type === 'Continental Zone' && geo.child_regions?.docs?.length > 0) {
-    const nationIds = geo.child_regions.docs.map((child: any) => child.id);
-    const inferredGroups = await getInferredEthnicGroups(nationIds);
-    // Combine the direct list with the inferred list
-    allEthnicGroups = [...allEthnicGroups, ...inferredGroups];
-  }
-  // ---------------------------------
-
-  const instruments = geo.instruments?.docs;
+  let allInstruments = geo.instruments?.docs || [];
   const childRegions = geo.child_regions?.docs;
+  
+
+
+  // Case 1: The current page is a broad region (Continental or Ecological)
+  if (['Continental Zone', 'Ecological Region'].includes(geo.type)) {
+    // If it has direct children (like a Continental Zone), use them.
+    // If it doesn't (like an Ecological Region), find nations that belong to it.
+    const nations = childRegions && childRegions.length > 0 ? childRegions : await getNationsInRegion(geo.id);
+    
+    if (nations.length > 0) {
+      const nationIds = nations.map(nation => nation.id);
+      const inferredGroups = await getInferredEthnicGroups(nationIds);
+      const inferredInstruments = await getInferredInstruments(nationIds);
+      
+      // Merge and de-duplicate the lists
+      allEthnicGroups = [...allEthnicGroups, ...inferredGroups];
+      allInstruments = [...allInstruments, ...inferredInstruments];
+    }
+  }
+  // ------------------------------------------
+
 
   return (
     <main className="p-4 md:p-8 bg-gray-900 text-gray-200 min-h-screen">
@@ -101,6 +133,14 @@ export default async function GeographyDetailPage({ params }: { params: { slug: 
         )}
         {/* ---------------------------------- */}
 
+          <div className="mt-12 space-y-12">
+          {childRegions && childRegions.length > 0 && (
+            <div>
+              <h2 className="text-3xl font-bold text-white border-b border-gray-700 pb-2 mb-4">Sub-Regions / Nations</h2>
+              {renderLinkList(childRegions, 'geographies')}
+            </div>
+          )}
+
           <div>
             <h2 className="text-3xl font-bold text-white border-b border-gray-700 pb-2 mb-4">Ethnic Groups</h2>
             {renderLinkList(allEthnicGroups, 'ethnic-groups')}
@@ -108,9 +148,10 @@ export default async function GeographyDetailPage({ params }: { params: { slug: 
 
           <div>
             <h2 className="text-3xl font-bold text-white border-b border-gray-700 pb-2 mb-4">Instruments from this Region</h2>
-            {renderLinkList(instruments, 'instruments')}
+            {renderLinkList(allInstruments, 'instruments')}
           </div>
         </div>
+      </div>
     </main>
   );
 }
