@@ -1,5 +1,6 @@
 // src/app/geographies/[slug]/page.tsx
 import Link from 'next/link';
+import React from 'react';
 
 // Helper function to render lists of linked items
 const renderLinkList = (items: any[] | undefined, basePath: string) => {
@@ -62,7 +63,7 @@ export default async function GeographyDetailPage({ params }: { params: { slug: 
 
   // If it's a Continental Zone, also fetch groups from its child nations and merge them
   if (geo.type === 'Continental Zone' && geo.child_regions?.docs?.length > 0) {
-    const nationIds = geo.child_regions.docs.map(child => child.id);
+    const nationIds = geo.child_regions.docs.map((child: any) => child.id);
     const inferredGroups = await getInferredEthnicGroups(nationIds);
     // Combine the direct list with the inferred list
     allEthnicGroups = [...allEthnicGroups, ...inferredGroups];
@@ -83,23 +84,22 @@ export default async function GeographyDetailPage({ params }: { params: { slug: 
         {/* ... Type and Parent Region ... */}
         <p className="text-xl text-gray-400 mt-2">Type: {geo.type}</p>
 
-        {/* --- ADD THIS BLOCK BACK --- */}
-        {geo.parent_region && typeof geo.parent_region === 'object' && (
-          <p className="text-lg text-gray-300 mt-2">
-            Part of: <Link href={`/geographies/${geo.parent_region.slug}`} className="text-blue-400 hover:underline">{geo.parent_region.name}</Link>
-          </p>
+         {/* --- THIS IS THE UPDATED BLOCK --- */}
+        {geo.containing_regions && geo.containing_regions.length > 0 && (
+          <div className="text-lg text-gray-300 mt-2">
+            <span>Part of: </span>
+            {geo.containing_regions.map((parent: { id: string; slug: string; name: string }, index: number) => (
+              <React.Fragment key={parent.id}>
+                <Link href={`/geographies/${parent.slug}`} className="text-blue-400 hover:underline">
+                  {parent.name}
+                </Link>
+                {/* Add a comma if it's not the last item in the list */}
+                {index < geo.containing_regions.length - 1 && ', '}
+              </React.Fragment>
+            ))}
+          </div>
         )}
-        {/* ------------------------- */}
-
-        <div className="mt-12 space-y-12">
-          {/* --- ADD THIS BLOCK BACK --- */}
-          {childRegions && childRegions.length > 0 && (
-            <div>
-              <h2 className="text-3xl font-bold text-white border-b border-gray-700 pb-2 mb-4">Sub-Regions / Nations</h2>
-              {renderLinkList(childRegions, 'geographies')}
-            </div>
-          )}
-          {/* ------------------------- */}
+        {/* ---------------------------------- */}
 
           <div>
             <h2 className="text-3xl font-bold text-white border-b border-gray-700 pb-2 mb-4">Ethnic Groups</h2>
@@ -111,7 +111,6 @@ export default async function GeographyDetailPage({ params }: { params: { slug: 
             {renderLinkList(instruments, 'instruments')}
           </div>
         </div>
-      </div>
     </main>
   );
 }
