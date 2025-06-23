@@ -31,7 +31,7 @@ export default async function InstrumentDetailPage({ params }: { params: { slug:
   }
 
   // A reusable helper component to render lists of links cleanly
-  const renderLinkList = (items: any[], basePath: string) => {
+  const renderLinkList = (items: { id: string; slug: string; name: string }[], basePath: string) => {
     if (!items || items.length === 0) {
       return <p className="text-gray-500 text-sm">None listed.</p>;
     }
@@ -60,16 +60,15 @@ export default async function InstrumentDetailPage({ params }: { params: { slug:
           {/* Left Column: Media */}
           <div>
             {instrument.primary_image && typeof instrument.primary_image === 'object' && (
-            // --- 2. USE THE NEW COMPONENT ---
-            <PayloadImage
-              src={instrument.primary_image.url}
-              alt={instrument.name}
-              width={instrument.primary_image.width}
-              height={instrument.primary_image.height}
-              className="rounded-lg shadow-lg w-full object-cover aspect-square"
-              priority
-            />
-            )}
+                <PayloadImage
+                  src={instrument.primary_image.url} // Pass the relative URL
+                  alt={instrument.name}
+                  width={instrument.primary_image.width}
+                  height={instrument.primary_image.height}
+                  className="rounded-lg shadow-lg w-full object-cover aspect-square"
+                  priority
+                />
+              )}
             {instrument.audio_sample && typeof instrument.audio_sample === 'object' && (
               <div className="mt-4">
                 <p className="font-semibold mb-2 text-white">Listen:</p>     
@@ -146,7 +145,7 @@ export default async function InstrumentDetailPage({ params }: { params: { slug:
               <div>
                 <h3 className="text-2xl font-bold text-white border-b border-gray-700 pb-2 mb-3">Performances</h3>
                 <div className="space-y-4">
-                  {instrument.video_links.map((video, index) => (
+                  {instrument.video_links.map((video: { url: string; description?: string }, index: number) => (
                     <div key={index}>
                       {/* We can make this an embedded player later */}
                       <a href={video.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">

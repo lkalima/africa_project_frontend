@@ -1,27 +1,40 @@
-'use client'; // This directive marks it as a Client Component
+'use client';
 
 import Image from 'next/image';
 
-// This is our custom loader function, now living inside the client component file
-const payloadImageLoader = ({ src, width, quality }) => {
-  // The `src` prop will be the relative URL from Payload (e.g., /media/image.jpg)
-  // We prepend our backend's public URL.
-  return `${process.env.NEXT_PUBLIC_PAYLOAD_URL}${src}?w=${width}&q=${quality || 75}`;
+type Props = {
+  src: string | null | undefined; // The URL from Payload, like /media/image.jpg
+  alt: string;
+  width?: number;
+  height?: number;
+  priority?: boolean;
+  className?: string;
 };
 
-// This is the actual component we will use in our pages
-export const PayloadImage = ({ src, alt, width, height, priority, className }) => {
+export const PayloadImage = ({ src, alt, width, height, priority, className }: Props) => {
+  // Get the base URL from environment variables
+  const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL;
+
+  // --- DIAGNOSTIC AND SAFETY CHECKS ---
   if (!src) {
-    return <span>No Image</span>;
+    // If no src is provided, don't render anything
+    return null;
   }
+  
+  if (!payloadUrl) {
+    // If the environment variable is missing, log a clear error and don't render
+    console.error("ERROR: NEXT_PUBLIC_PAYLOAD_URL environment variable is not set!");
+    return <span>Image Error: Server URL not configured.</span>;
+  }
+  // ------------------------------------
+const imageUrl = new URL(src, payloadUrl).toString(); // Construct the full URL
 
   return (
     <Image
-      loader={payloadImageLoader}
-      src={src}
-      alt={alt || 'Image'}
-      width={width}
-      height={height}
+      src={imageUrl}
+      alt={alt || 'Image from Africa Project'}
+      width={width || 500}
+      height={height || 500}
       priority={priority}
       className={className}
     />
