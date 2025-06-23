@@ -25,7 +25,25 @@ export default async function InstrumentsPage() {
 
   return (
     <main className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-4xl font-bold mb-6 text-white">African Musical Instruments</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-4xl font-bold text-white">African Musical Instruments</h1>
+        <div className="flex space-x-4">
+          <a 
+            href="http://localhost:3000/api/musical-instruments/export/json"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            download // The 'download' attribute is helpful but the backend headers handle it
+          >
+            Download (JSON)
+          </a>
+          <a 
+            href="http://localhost:3000/api/musical-instruments/export/csv"
+            className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+            download
+          >
+            Download (CSV)
+          </a>
+        </div>
+      </div>
       <ul className="space-y-2">
         {instruments.map((instrument) => (
           <li key={instrument.id}>
