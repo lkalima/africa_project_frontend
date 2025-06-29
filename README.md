@@ -2,6 +2,15 @@
 
 This repository contains the frontend application for the Africa Project, built with Next.js and React. It fetches data from the [Africa Project Backend API](https://github.com/lkalima/africa_project_backend) and renders the user-facing website.
 
+Preview of Homepage (Provisional UI/UX, to be updated):
+
+![Screenshot 2025-06-29 235023](https://github.com/user-attachments/assets/7c96daba-9a95-47d3-af3d-ea944bcd5920)
+
+Preview of details page:
+![Screenshot 2025-06-29 235140](https://github.com/user-attachments/assets/49254141-6727-4c27-86fc-626e8502db2a)
+
+
+
 ---
 
 ## 🚀 Getting Started
@@ -34,6 +43,9 @@ Follow these instructions to get the frontend running on your local machine for 
     ```
 5.  Open [http://localhost:3001](http://localhost:3001) with your browser to see the result. The backend API must be running on `localhost:3000` for the data fetching to work.
 
+Preview of Command line setting up server:
+![Screenshot 2025-06-29 235305](https://github.com/user-attachments/assets/f723c405-0c91-4b9d-a3cd-9d45ca1c9837)
+
 ---
 
 ## 📁 Project Structure
@@ -54,4 +66,4 @@ This project uses the Next.js App Router. Here is an overview of the key files a
 
 ## 📚 Learn More & Documentation
 
-For a full overview of the project's vision, architecture, data models, and workflows, please refer to the comprehensive **[Project Blueprint](https://github.com/lkalima/africa_project_backend)** located in the backend repository.
+For a full overview of the project's vision, architecture, data models, and workflows, please refer to the comprehensive Project Blueprint located in the **[backend repository.](https://github.com/lkalima/africa_project_backend)**
